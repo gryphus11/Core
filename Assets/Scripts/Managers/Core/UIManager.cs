@@ -79,6 +79,18 @@ public class UIManager
     #endregion
 
     #region 비동기로딩시 사용합니다.
+    public void MakeSubItem<T>(Transform parent = null, string key = null, Action<T> callback = null) where T : UI_Base
+    {
+        if (string.IsNullOrEmpty(key))
+            key = typeof(T).Name;
+
+        Managers.Resource.InstantiateAsync(key, parent, (go) =>
+        {
+            T subItem = Utils.GetOrAddComponent<T>(go);
+            callback?.Invoke(subItem);
+        });
+    }
+
     public void ShowSceneUIAsync<T>(string key = null, Action<T> callback = null) where T : UI_Base
     {
         if (string.IsNullOrEmpty(key))
