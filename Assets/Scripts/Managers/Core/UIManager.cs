@@ -25,7 +25,7 @@ public class UIManager
     }
 
     /// <summary>
-    /// Äµ¹ö½ºÀÇ ¼ø¼­¸¦ ÀÚµ¿À¸·Î Á¶ÀıÇÕ´Ï´Ù.
+    /// ìº”ë²„ìŠ¤ì˜ ìˆœì„œë¥¼ ìë™ìœ¼ë¡œ ì¡°ì ˆí•©ë‹ˆë‹¤.
     /// </summary>
     /// <param name="go"></param>
     /// <param name="sort"></param>
@@ -51,7 +51,7 @@ public class UIManager
         return _sceneUI as T;
     }
 
-    #region ¼±·Îµå°¡ ¿Ï·áµÈ ¸®¼Ò½º¿¡ ÇÑÇØ¼­ »ç¿ëÇÕ´Ï´Ù.
+    #region ì„ ë¡œë“œê°€ ì™„ë£Œëœ ë¦¬ì†ŒìŠ¤ì— í•œí•´ì„œ ì‚¬ìš©í•©ë‹ˆë‹¤.
     public T ShowSceneUI<T>(string key = null) where T : UI_Base
     {
         if (_sceneUI != null)
@@ -78,7 +78,7 @@ public class UIManager
     }
     #endregion
 
-    #region ºñµ¿±â·Îµù½Ã »ç¿ëÇÕ´Ï´Ù.
+    #region ë¹„ë™ê¸°ë¡œë”©ì‹œ ì‚¬ìš©í•©ë‹ˆë‹¤.
     public void MakeSubItem<T>(Transform parent = null, string key = null, Action<T> callback = null) where T : UI_Base
     {
         if (string.IsNullOrEmpty(key))
