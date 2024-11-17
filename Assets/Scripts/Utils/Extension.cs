@@ -27,4 +27,34 @@ public static class Extension
 	{
 		return bc != null && bc.isActiveAndEnabled;
 	}
+
+    public static void Shuffle<T>(this IList<T> list)
+    {
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+
+            //swap
+            int k = UnityEngine.Random.Range(0, n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
+    }
+
+    public static void DestroyChilds(this GameObject go)
+    {
+        Transform[] children = new Transform[go.transform.childCount];
+        for (int i = 0; i < go.transform.childCount; i++)
+        {
+            children[i] = go.transform.GetChild(i);
+        }
+
+        // 모든 자식 오브젝트 삭제
+        foreach (Transform child in children)
+        {
+            Managers.Resource.Destroy(child.gameObject);
+        }
+    }
 }

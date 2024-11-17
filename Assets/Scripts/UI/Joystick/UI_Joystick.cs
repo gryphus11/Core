@@ -1,81 +1,154 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UI_Joystick : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, IDragHandler
+public class UI_Joystick : UI_Scene
 {
-    [SerializeField]
-    Image background;
+    Image _background;
+    Image _handler;
 
-    [SerializeField]
-    Image handler;
+    TMP_Text _debugJoystickText;
+    TMP_Text _debugKeyText;
 
-    float joystickRadius;
-    Vector2 touchPosition = Vector2.zero;
-    Vector2 dragPosition = Vector2.zero;
-    Vector2 moveDirection = Vector2.zero;
+    float _joystickRadius;
+    Vector2 _joystickOriginPos = Vector2.zero;
 
-    public Action<Vector2> OnDragHandler { get; set; }
+    Vector2 _touchPosition = Vector2.zero;
+    Vector2 _dragPosition = Vector2.zero;
+    Vector2 _moveDirection = Vector2.zero;
 
-    // Start is called before the first frame update
-    void Start()
+    Vector2 _keyInputDirection = Vector2.zero;
+    Vector2 _prevKeyInputDirection = Vector2.zero;
+
+    enum GameObjects
     {
-        joystickRadius = background.GetComponent<RectTransform>().sizeDelta.y * 0.5f;
+        JoystickBackground,
+        Handler,
+    }
+
+    private void OnDestroy()
+    {
+        Managers.UI.OnTimeScaleChanged -= OnTimeScaleChanged;
+    }
+
+    public override bool Init()
+    {
+        if (base.Init() == false)
+            return false;
+
+        Managers.UI.OnTimeScaleChanged += OnTimeScaleChanged;
+
+        BindObject(typeof(GameObjects));
+
+        _handler = GetObject((int)GameObjects.Handler).GetComponent<Image>();
+        _background = GetObject((int)GameObjects.JoystickBackground).GetComponent<Image>();
+        _joystickRadius = _background.GetComponent<RectTransform>().sizeDelta.y * 0.5f;
+        _joystickOriginPos = _background.transform.position;
+
+        gameObject.BindEvent(OnPointerDown, null, Define.UIEvent.PointerDown);
+        gameObject.BindEvent(OnPointerUp, null, Define.UIEvent.PointerUp);
+        gameObject.BindEvent(null, OnDrag, Define.UIEvent.Drag);
+
         Initialize();
+        return true;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void OnDrag(BaseEventData eventData)
     {
+        _dragPosition = (eventData as PointerEventData).position;
 
+        Vector2 touchDir = _dragPosition - _touchPosition;
+        _moveDirection = touchDir.normalized;
+
+        float moveDistance = Mathf.Min(touchDir.magnitude, _joystickRadius);
+
+        _handler.transform.position = _touchPosition + (_moveDirection * moveDistance);
+
+        Managers.Game.MoveDir = _moveDirection;
     }
 
-    public void OnDrag(PointerEventData eventData)
+    public void OnPointerDown()
     {
-        dragPosition = eventData.position;
+        SetActiveJoyStick(true);
 
-        Vector2 touchDir = dragPosition - touchPosition;
-        moveDirection = touchDir.normalized;
+        if(Input.touchCount > 0)
+            _touchPosition = Input.GetTouch(0).position;
+        else
+            _touchPosition = Input.mousePosition;
 
-        float moveDistance = Mathf.Min(touchDir.magnitude, joystickRadius);
-
-        handler.transform.position = touchPosition + (moveDirection * moveDistance);
-
-        OnDragHandler?.Invoke(moveDirection);
+        _background.transform.position = _touchPosition;
+        _handler.transform.position = _touchPosition;
     }
 
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        Debug.Log("Click");
-    }
-
-    public void OnPointerDown(PointerEventData eventData)
-    {
-        background.gameObject.SetActive(true);
-        handler.gameObject.SetActive(true);
-
-        touchPosition = eventData.position;
-        background.transform.position = touchPosition;
-        handler.transform.position = touchPosition;
-    }
-
-    public void OnPointerUp(PointerEventData eventData)
+    public void OnPointerUp()
     {
         Initialize();
     }
 
     private void Initialize()
     {
-        background.gameObject.SetActive(false);
-        handler.gameObject.SetActive(false);
+        SetActiveJoyStick(false);
 
-        touchPosition = Vector2.zero;
-        dragPosition = Vector2.zero;
-        moveDirection = Vector2.zero;
+        _touchPosition = Vector2.zero;
+        _dragPosition = Vector2.zero;
+        _moveDirection = Vector2.zero;
 
-        OnDragHandler?.Invoke(moveDirection);
+        Managers.Game.MoveDir = _moveDirection;
+    }
+
+    private void SetActiveJoyStick(bool isActive)
+    {
+        _background.gameObject.SetActive(isActive);
+        _handler.gameObject.SetActive(isActive);
+    }
+
+    public void OnTimeScaleChanged(int timeScale)
+    {
+        if (timeScale == 1)
+        {
+            gameObject.SetActive(true);
+            Initialize();
+        }
+        else
+            gameObject.SetActive(false);
+    }
+
+    private void Update()
+    {
+        if (_moveDirection == Vector2.zero)
+        {
+            _prevKeyInputDirection = _keyInputDirection;
+            _keyInputDirection = GetKeyInput();
+
+            if ((_prevKeyInputDirection == Vector2.zero && _keyInputDirection == Vector2.zero) || 
+                _prevKeyInputDirection == _keyInputDirection)
+                return;
+
+            Managers.Game.MoveDir = _keyInputDirection;
+        }
+        else
+        {
+            _prevKeyInputDirection = Vector2.zero;
+            _keyInputDirection = Vector2.zero;
+        }
+
+    }
+
+    private Vector2 GetKeyInput()
+    {
+        Vector2 moveDir = Vector2.zero;
+
+        if(Input.GetKey(KeyCode.W))
+            moveDir.y = 1;
+        if (Input.GetKey(KeyCode.S))
+            moveDir.y = -1;
+        if (Input.GetKey(KeyCode.A))
+            moveDir.x = -1;
+        if (Input.GetKey(KeyCode.D))
+            moveDir.x = 1;
+
+        return moveDir.normalized;
     }
 }

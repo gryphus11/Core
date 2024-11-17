@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class UIManager
 {
@@ -11,6 +12,8 @@ public class UIManager
     UI_Base _sceneUI;
 
     Stack<UI_Base> _uiStack = new Stack<UI_Base>();
+
+    public event Action<int> OnTimeScaleChanged;
 
     public GameObject Root
     {
@@ -52,17 +55,23 @@ public class UIManager
     }
 
     #region 선로드가 완료된 리소스에 한해서 사용합니다.
-    public T ShowSceneUI<T>(string key = null) where T : UI_Base
+    public T MakeSubItem<T>(Transform parent = null, string key = null, bool pooling = true) where T : UI_Base
     {
-        if (_sceneUI != null)
-        {
-            return GetSceneUI<T>();
-        }
-
         if (string.IsNullOrEmpty(key))
             key = typeof(T).Name;
 
-        _sceneUI = Managers.Resource.Instantiate(key, pooling: true).GetOrAddComponent<T>();
+        var subItem = Managers.Resource.Instantiate(key, parent, pooling);
+        subItem.transform.SetParent(parent);
+        return subItem.gameObject.GetOrAddComponent<T>();
+    }
+
+    public T ShowSceneUI<T>(string key = null) where T : UI_Base
+    {
+        if (string.IsNullOrEmpty(key))
+            key = typeof(T).Name;
+
+        _sceneUI = Managers.Resource.Instantiate(key).GetOrAddComponent<T>();
+        _sceneUI.transform.SetParent(Root.transform);
         return _sceneUI as T;
     }
 
@@ -71,7 +80,7 @@ public class UIManager
         if (string.IsNullOrEmpty(key))
             key = typeof(T).Name;
 
-        var ui = Managers.Resource.Instantiate(key, pooling: true).GetOrAddComponent<T>();
+        var ui = Managers.Resource.Instantiate(key, Root.transform).GetOrAddComponent<T>();
         _uiStack.Push(ui);
         RefreshTimeScale();
         return ui;
@@ -79,7 +88,7 @@ public class UIManager
     #endregion
 
     #region 비동기로딩시 사용합니다.
-    public void MakeSubItem<T>(Transform parent = null, string key = null, Action<T> callback = null) where T : UI_Base
+    public void MakeSubItemAsync<T>(Transform parent = null, string key = null, Action<T> callback = null) where T : UI_Base
     {
         if (string.IsNullOrEmpty(key))
             key = typeof(T).Name;
@@ -181,9 +190,17 @@ public class UIManager
 
     public void RefreshTimeScale()
     {
+        if (SceneManager.GetActiveScene().name != Define.SceneType.Game.ToString())
+        {
+            Time.timeScale = 1;
+            return;
+        }
+
         if (_uiStack.Count > 0)
             Time.timeScale = 0.0f;
         else
             Time.timeScale = 1.0f;
+
+        OnTimeScaleChanged?.Invoke((int)Time.timeScale);
     }
 }

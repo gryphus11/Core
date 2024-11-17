@@ -37,6 +37,13 @@ public static class Define
         Unknown,
         Player,
         Monster,
-        Projectile,
     }
+
+    #region sortingOrder
+    public static readonly int UI_GAMESCENE_SORT_CLOSED = 321;
+    public static readonly int DROP_SORT = 105;
+
+    public static readonly int UI_GAMESCENE_SORT_OPEN = 323;
+    public static readonly int DROP_GETITEM_SORT = 322;
+    #endregion
 }

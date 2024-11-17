@@ -1,13 +1,16 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// °ÔÀÓÀÇ Àü¹İÀûÀÎ »óÈ²À» ´Ù·ë
+/// ê²Œì„ì˜ ì „ë°˜ì ì¸ ìƒí™©ì„ ë‹¤ë£¸
 /// </summary>
 public class GameManager
 {
-
+    public bool IsGameEnd { get; set; } = false;
     public bool BGMOn { get; set; }
     public bool EffectSoundOn { get; set; }
+
+    public event System.Action<Vector2> onMoveDirChanged;
+
+    public Vector2 MoveDir { get; set; }
 }

@@ -44,7 +44,8 @@ class Pool
 
     public void Push(GameObject poolObject)
     {
-        _pool.Release(poolObject);
+        if(poolObject.activeSelf)
+            _pool.Release(poolObject);
     }
 
     #region 오브젝트 풀 함수
@@ -63,7 +64,14 @@ class Pool
 
     private void OnGet(GameObject poolObject)
     {
-        poolObject.SetActive(true);
+        try
+        {
+            poolObject.SetActive(true);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogException(e);
+        }
     }
 
     private void OnDestroy(GameObject poolObject)
@@ -100,5 +108,10 @@ public class PoolManager
     {
         Pool pool = new Pool(prefab);
         _pools.Add(prefab.name, pool);
+    }
+
+    public void Clear()
+    {
+        _pools.Clear();
     }
 }
